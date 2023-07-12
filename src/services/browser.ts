@@ -47,15 +47,20 @@ class Browser {
     return this.instance._page.content();
   }
 
+  public static async getDomain() {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    return new URL(this.instance._page.url()).hostname.replace('www.', '');
+  }
+
   public static async getLinks() {
     if (!this.instance._page) {
       throw new Error('Page is not ready');
     }
 
-    const domain = new URL(this.instance._page.url()).origin
-      .replace('www.', '')
-      .replace('http://', '')
-      .replace('https://', '');
+    const domain = await this.getDomain();
 
     const links = await this.instance._page.$$eval(
       'a',
