@@ -25,6 +25,14 @@ class Browser {
 
     return true;
   }
+
+  public static async close() {
+    if (!this.instance._browser) {
+      throw new Error('Browser is not ready');
+    }
+
+    await this.instance._browser.close();
+  }
 }
 
 export default Browser;
