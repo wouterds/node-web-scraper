@@ -5,7 +5,8 @@
   "scripts": {
     "lint": "eslint ./src --ext .ts",
     "lint:fix": "eslint ./src --ext .ts --fix",
-    "lint:ts": "tsc --noEmit"
+    "lint:ts": "tsc --noEmit",
+    "cli:scrape": "ts-node ./src/cli/scrape.ts"
   },
   "dependencies": {
     "colors": "^1.4.0",
