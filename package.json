@@ -8,11 +8,13 @@
     "lint:ts": "tsc --noEmit"
   },
   "dependencies": {
+    "colors": "^1.4.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^17.6.6",
+    "@types/colors": "^1.2.1",
     "@types/node": "^20.4.1",
     "@types/yargs": "^17.0.24",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
