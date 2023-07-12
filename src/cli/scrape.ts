@@ -25,6 +25,11 @@ const scrapeLinkRecuversively = async (url: string) => {
 
   await Browser.browseUrl(url);
 
+  data[url] = {
+    title: await Browser.getTitle(),
+    content: await Browser.getContent(),
+  };
+
   for (const link of await Browser.getLinks()) {
     if (!data[link]) {
       data[link] = {
