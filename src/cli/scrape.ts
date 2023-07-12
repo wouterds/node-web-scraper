@@ -1,4 +1,5 @@
 import colors from 'colors';
+import { createObjectCsvWriter } from 'csv-writer';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
@@ -18,7 +19,7 @@ if (!website) {
 
 console.log(colors.yellow(`${colors.bold('website:')} ${website}`));
 
-const data: Record<string, string> = {};
+const data: Record<string, { content: string; title: string }> = {};
 const scrapeLinkRecuversively = async (url: string) => {
   console.log(colors.magenta(`Scraping ${url}`));
 
@@ -26,7 +27,11 @@ const scrapeLinkRecuversively = async (url: string) => {
 
   for (const link of await Browser.getLinks()) {
     if (!data[link]) {
-      data[link] = await Browser.getContent();
+      data[link] = {
+        title: await Browser.getTitle(),
+        content: await Browser.getContent(),
+      };
+
       await scrapeLinkRecuversively(link);
     }
   }
@@ -46,8 +51,18 @@ const scrapeLinkRecuversively = async (url: string) => {
     ),
   );
 
-  for (const [link, content] of Object.entries(data)) {
-    console.log(`${colors.blue(link)} - ${colors.white(`${content.length}`)}`);
+  const domain = await Browser.getDomain();
+
+  const csvWriter = createObjectCsvWriter({
+    path: `./data/${domain}.csv`,
+    header: ['url', 'title', 'content'],
+  });
+
+  for (const [url, { title, content }] of Object.entries(data)) {
+    const sizeInKb = Math.round(content.length / 1024);
+    console.log(`${colors.blue(url)} - ${colors.white(`${sizeInKb}kb`)}`);
+
+    await csvWriter.writeRecords([{ url, title, content }]);
   }
 
   await Browser.close();
