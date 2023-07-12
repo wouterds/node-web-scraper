@@ -1,4 +1,5 @@
 import puppeteer, { Browser as PuppeteerBrowser, Page } from 'puppeteer';
+import { unique } from 'radash';
 
 class Browser {
   private static _instance: Browser;
@@ -44,6 +45,43 @@ class Browser {
     }
 
     return this.instance._page.content();
+  }
+
+  public static async getLinks() {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    const domain = new URL(this.instance._page.url()).origin
+      .replace('www.', '')
+      .replace('http://', '')
+      .replace('https://', '');
+
+    const links = await this.instance._page.$$eval(
+      'a',
+      (anchors, domain) => {
+        return anchors
+          .map(({ href }) => {
+            if (!href) {
+              return null;
+            }
+
+            if (!href.includes(domain)) {
+              return null;
+            }
+
+            if (!href.includes('http')) {
+              return null;
+            }
+
+            return href.split('#')[0].split('?')[0].replace(/\/$/, '');
+          })
+          .filter(Boolean);
+      },
+      domain,
+    );
+
+    return unique(links);
   }
 
   public static async close() {
