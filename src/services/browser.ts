@@ -38,6 +38,14 @@ class Browser {
     return true;
   }
 
+  public static getContent() {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    return this.instance._page.content();
+  }
+
   public static async close() {
     if (!this.instance._browser) {
       throw new Error('Browser is not ready');
