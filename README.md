@@ -10,5 +10,10 @@ yarn
 ## Usage
 
 ```bash
+# run the scraper
 yarn scrape --website https://www.example.com
+
+# data can be found in the data folder
+| data
+|---| example.com.csv
 ```
