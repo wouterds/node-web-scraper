@@ -55,6 +55,14 @@ class Browser {
     return new URL(this.instance._page.url()).hostname.replace('www.', '');
   }
 
+  public static async getTitle() {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    return this.instance._page.title();
+  }
+
   public static async getLinks() {
     if (!this.instance._page) {
       throw new Error('Page is not ready');
