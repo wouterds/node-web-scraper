@@ -39,12 +39,20 @@ class Browser {
     return true;
   }
 
-  public static getContent() {
+  public static async getHTML() {
     if (!this.instance._page) {
       throw new Error('Page is not ready');
     }
 
     return this.instance._page.content();
+  }
+
+  public static async getContent() {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    return this.instance._page.$eval('body', el => el.textContent);
   }
 
   public static async getDomain() {
