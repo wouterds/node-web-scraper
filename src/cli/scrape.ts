@@ -7,17 +7,17 @@ import yargs from 'yargs/yargs';
 import Browser from '../services/browser';
 
 type Args = {
-  website?: string;
+  url?: string;
 };
 
-const { website } = yargs(hideBin(process.argv)).argv as Args;
+const { url } = yargs(hideBin(process.argv)).argv as Args;
 
-if (!website) {
-  console.log(colors.red('Please provide a website with the --website flag'));
+if (!url) {
+  console.log(colors.red('Please provide a url with the --url flag'));
   process.exit(1);
 }
 
-console.log(colors.yellow(`${colors.bold('website:')} ${website}`));
+console.log(colors.yellow(`${colors.bold('url:')} ${url}`));
 
 const data: Record<string, { content: string; title: string }> = {};
 const scrapeLinkRecuversively = async (url: string) => {
@@ -46,7 +46,7 @@ const scrapeLinkRecuversively = async (url: string) => {
   const start = new Date();
   await Browser.init();
 
-  await scrapeLinkRecuversively(website);
+  await scrapeLinkRecuversively(url);
 
   console.log(
     colors.green(
