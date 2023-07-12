@@ -81,7 +81,7 @@ class Browser {
       domain,
     );
 
-    return unique(links);
+    return unique(links) as string[];
   }
 
   public static async close() {
