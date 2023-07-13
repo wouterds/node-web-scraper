@@ -84,29 +84,28 @@ class Browser {
 
     const domain = await this.getDomain();
 
-    const links = await this.instance._page.$$eval(
-      'a',
-      (anchors, domain) => {
-        return anchors
-          .map(({ href }) => {
-            if (!href) {
-              return null;
-            }
+    const links = (
+      await this.instance._page.$$eval('a', anchors =>
+        anchors.map(({ href }) => href),
+      )
+    )
+      .map(link => {
+        if (!link) {
+          return null;
+        }
 
-            if (!href.includes(domain)) {
-              return null;
-            }
+        const url = new URL(link);
+        if (!url.hostname.includes(domain)) {
+          return null;
+        }
 
-            if (!href.includes('http')) {
-              return null;
-            }
+        if (!link.includes('http')) {
+          return null;
+        }
 
-            return href.split('#')[0].split('?')[0].replace(/\/$/, '');
-          })
-          .filter(Boolean);
-      },
-      domain,
-    );
+        return link.split('#')[0].replace(/\/$/, '');
+      })
+      .filter(Boolean);
 
     return unique(links) as string[];
   }
