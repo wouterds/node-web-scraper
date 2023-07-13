@@ -69,7 +69,12 @@ const url = `http://${domain}`;
 
   const csvWriter = createObjectCsvWriter({
     path: `./data/${domain}.csv`,
-    header: ['url', 'title', 'content'],
+    alwaysQuote: true,
+    header: [
+      { id: 'url', title: 'url' },
+      { id: 'title', title: 'title' },
+      { id: 'content', title: 'content' },
+    ],
   });
 
   for (const [url, { title, content }] of Object.entries(data)) {
