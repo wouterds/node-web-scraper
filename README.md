@@ -11,7 +11,7 @@ yarn
 
 ```bash
 # run the scraper
-yarn scrape --url https://www.example.com
+yarn scrape --domain example.com
 
 # data can be found in the data folder
 | data

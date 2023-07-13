@@ -7,17 +7,24 @@ import yargs from 'yargs/yargs';
 import Browser from '../services/browser';
 
 type Args = {
-  url?: string;
+  domain?: string;
 };
 
-const { url } = yargs(hideBin(process.argv)).argv as Args;
+const { domain } = yargs(hideBin(process.argv)).argv as Args;
 
-if (!url) {
-  console.log(colors.red('Please provide a url with the --url flag'));
+if (!domain) {
+  console.log(colors.red('Please provide a domain with the --domain flag'));
   process.exit(1);
 }
 
-console.log(colors.yellow(`${colors.bold('url:')} ${url}`));
+if (domain.includes('://')) {
+  console.log(
+    colors.red('Please provide a valid domain (without the protocol)'),
+  );
+  process.exit(1);
+}
+
+console.log(colors.yellow(`${colors.bold('domain:')} ${domain}`));
 
 const data: Record<string, { content: string; title: string }> = {};
 const scrapeLinkRecuversively = async (url: string) => {
@@ -41,6 +48,8 @@ const scrapeLinkRecuversively = async (url: string) => {
     }
   }
 };
+
+const url = `http://${domain}`;
 
 (async () => {
   const start = new Date();
