@@ -1,5 +1,7 @@
 # @wouterds/node-web-scraper
 
+[![code-review](https://github.com/wouterds/node-web-scraper/workflows/code-review/badge.svg)](https://github.com/wouterds/node-web-scraper/actions/workflows/code-review.yml)
+
 ## Setup
 
 ```bash
