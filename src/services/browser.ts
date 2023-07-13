@@ -1,5 +1,6 @@
 import puppeteer, { Browser as PuppeteerBrowser, Page } from 'puppeteer';
 import { unique } from 'radash';
+import sanitizeHtml from 'sanitize-html';
 
 class Browser {
   private static _instance: Browser;
@@ -52,7 +53,12 @@ class Browser {
       throw new Error('Page is not ready');
     }
 
-    return this.instance._page.$eval('body', el => el.textContent);
+    const html = await Browser.getHTML();
+
+    return sanitizeHtml(html.replace(/><\//g, '> </'), { allowedTags: [] })
+      .replace(/\n+/g, '\n')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   public static async getDomain() {
