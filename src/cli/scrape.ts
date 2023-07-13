@@ -78,7 +78,7 @@ const url = `http://${domain}`;
   });
 
   for (const [url, { title, content }] of Object.entries(data)) {
-    const sizeInKb = Math.round(content.length / 1024);
+    const sizeInKb = Math.max(Math.round(content.length / 1024), 1);
     console.log(`${colors.blue(url)} - ${colors.white(`${sizeInKb}kb`)}`);
 
     await csvWriter.writeRecords([{ url, title, content }]);
