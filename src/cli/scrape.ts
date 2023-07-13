@@ -1,6 +1,7 @@
 import colors from 'colors';
 import { createObjectCsvWriter } from 'csv-writer';
 import { formatDistanceToNowStrict } from 'date-fns';
+import fs from 'fs';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 
@@ -11,12 +12,10 @@ type Args = {
 };
 
 const { domain } = yargs(hideBin(process.argv)).argv as Args;
-
 if (!domain) {
   console.log(colors.red('Please provide a domain with the --domain flag'));
   process.exit(1);
 }
-
 if (domain.includes('://')) {
   console.log(
     colors.red('Please provide a valid domain (without the protocol)'),
@@ -26,63 +25,67 @@ if (domain.includes('://')) {
 
 console.log(colors.yellow(`${colors.bold('domain:')} ${domain}`));
 
-const data: Record<string, { content: string; title: string }> = {};
-const scrapeLinkRecuversively = async (url: string) => {
-  console.log(colors.magenta(`Scraping ${url}`));
+const url = `http://${domain}`;
+
+if (fs.existsSync(`./data/${domain}.csv`)) {
+  fs.unlinkSync(`./data/${domain}.csv`);
+}
+
+const csvWriter = createObjectCsvWriter({
+  path: `./data/${domain}.csv`,
+  alwaysQuote: true,
+  header: [
+    { id: 'url', title: 'url' },
+    { id: 'title', title: 'title' },
+    { id: 'content', title: 'content' },
+  ],
+});
+
+const links: string[] = [];
+const scrapeUrlRecuversively = async (url: string) => {
+  if (links.includes(url)) {
+    return;
+  }
+
+  links.push(url);
 
   await Browser.browseUrl(url);
 
-  data[url] = {
-    title: await Browser.getTitle(),
-    content: await Browser.getContent(),
-  };
+  const title = await Browser.getTitle();
+  const content = await Browser.getContent();
+  const size = Math.max(Math.ceil(content.length / 1024), 1);
+
+  await csvWriter.writeRecords([{ url, title, content }]);
+
+  console.log(`Scraped ${colors.magenta(url)} (${colors.blue(`${size}kb`)})`);
 
   for (const link of await Browser.getLinks()) {
-    if (!data[link]) {
-      data[link] = {
-        title: await Browser.getTitle(),
-        content: await Browser.getContent(),
-      };
-
-      await scrapeLinkRecuversively(link);
+    if (links.includes(link)) {
+      continue;
     }
+
+    await scrapeUrlRecuversively(link);
   }
 };
 
-const url = `http://${domain}`;
-
 (async () => {
   const start = new Date();
-  await Browser.init();
 
-  await scrapeLinkRecuversively(url);
+  await Browser.init();
+  await scrapeUrlRecuversively(url);
+  await Browser.close();
+
+  const fileSize = fs.statSync(`./data/${domain}.csv`).size;
 
   console.log(
     colors.green(
-      `Found ${Object.keys(data).length} links in ${formatDistanceToNowStrict(
+      `Scraped ${colors.bold(
+        links.length.toString(),
+      )} pages in ${formatDistanceToNowStrict(
         start,
-      )}`,
+      )}, data stored in ${colors.underline(
+        `./data/${domain}.csv`,
+      )} (${Math.max(Math.ceil(fileSize / 1024), 1)}kb)`,
     ),
   );
-
-  const domain = await Browser.getDomain();
-
-  const csvWriter = createObjectCsvWriter({
-    path: `./data/${domain}.csv`,
-    alwaysQuote: true,
-    header: [
-      { id: 'url', title: 'url' },
-      { id: 'title', title: 'title' },
-      { id: 'content', title: 'content' },
-    ],
-  });
-
-  for (const [url, { title, content }] of Object.entries(data)) {
-    const sizeInKb = Math.max(Math.round(content.length / 1024), 1);
-    console.log(`${colors.blue(url)} - ${colors.white(`${sizeInKb}kb`)}`);
-
-    await csvWriter.writeRecords([{ url, title, content }]);
-  }
-
-  await Browser.close();
 })();
