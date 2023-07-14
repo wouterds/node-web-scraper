@@ -1,7 +1,9 @@
 import colors from 'colors';
+import csvParser from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
 import { formatDistanceToNowStrict } from 'date-fns';
 import fs from 'fs';
+import { sleep } from 'radash';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 
@@ -10,10 +12,14 @@ import Browser from '../services/browser';
 type Args = {
   domain?: string;
   url?: string;
+  cookies?: string;
 };
 
-const { domain: domainArg, url: urlArg } = yargs(hideBin(process.argv))
-  .argv as Args;
+const {
+  domain: domainArg,
+  url: urlArg,
+  cookies: cookiesArg,
+} = yargs(hideBin(process.argv)).argv as Args;
 
 if (!domainArg && !urlArg) {
   console.log(
@@ -41,6 +47,16 @@ if (urlArg && !urlArg.includes('://')) {
   process.exit(1);
 }
 
+if (cookiesArg && !cookiesArg.includes('.csv')) {
+  console.log(colors.red('Please provide a valid cookies file (.csv)'));
+  process.exit(1);
+}
+
+if (cookiesArg && !fs.existsSync(cookiesArg)) {
+  console.log(colors.red('Could not load cookies csv'));
+  process.exit(1);
+}
+
 const domain = domainArg || new URL(urlArg as string).hostname;
 
 console.log(colors.white(`${colors.bold('Domain:')} ${domain}`));
@@ -49,13 +65,7 @@ const url = urlArg || `http://${domain}`;
 
 const recursively = !urlArg;
 
-if (fs.existsSync(`./data/${domain}.csv`)) {
-  console.log(
-    colors.yellow(
-      `${colors.bold('Warning:')} existing csv file found, it will be extended`,
-    ),
-  );
-}
+const existingCsvFound = fs.existsSync(`./data/${domain}.csv`);
 
 const csvWriter = createObjectCsvWriter({
   path: `./data/${domain}.csv`,
@@ -100,10 +110,51 @@ const scrapeUrlRecuversively = async (url: string) => {
 };
 
 (async () => {
+  const cookies: Array<{ name: string; domain: string; value: string }> = [];
+  if (cookiesArg) {
+    await new Promise(resolve =>
+      fs
+        .createReadStream(cookiesArg)
+        .pipe(csvParser())
+        .on('data', row => {
+          cookies.push(row);
+        })
+        .on('end', resolve),
+    );
+  }
+
+  console.log(
+    colors.white(
+      `${colors.bold('Cookies:')} ${
+        cookies.length ? cookies.length : 'no cookies loaded'
+      }`,
+    ),
+  );
+
+  if (existingCsvFound) {
+    if (fs.existsSync(`./data/${domain}.csv`)) {
+      console.log(
+        colors.yellow(
+          `${colors.bold(
+            'Warning:',
+          )} existing csv file found, it will be extended`,
+        ),
+      );
+    }
+
+    await sleep(1000);
+  }
+
   const start = new Date();
 
   await Browser.init();
+
+  for (const cookie of cookies) {
+    await Browser.setCookie(cookie.name, cookie.value, cookie.domain);
+  }
+
   await scrapeUrlRecuversively(url);
+
   await Browser.close();
 
   const fileSize = fs.statSync(`./data/${domain}.csv`).size;

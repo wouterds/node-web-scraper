@@ -40,6 +40,14 @@ class Browser {
     return true;
   }
 
+  public static async setCookie(name: string, value: string, domain: string) {
+    if (!this.instance._page) {
+      throw new Error('Page is not ready');
+    }
+
+    await this.instance._page.setCookie({ name, value, domain });
+  }
+
   public static async getHTML() {
     if (!this.instance._page) {
       throw new Error('Page is not ready');
