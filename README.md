@@ -12,8 +12,11 @@ yarn
 ## Usage
 
 ```bash
-# run the scraper
+# run the scraper recursively for entire domain
 yarn scrape --domain example.com
+
+# run the scraper for a single url
+yarn scrape --url https://example.com/blog/hello-world
 
 # data can be found in the data folder
 | data
