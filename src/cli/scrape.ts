@@ -150,7 +150,7 @@ const scrapeUrlRecuversively = async (url: string) => {
   await Browser.init();
 
   for (const cookie of cookies) {
-    await Browser.setCookie(cookie.name, cookie.value, cookie.domain);
+    Browser.setCookie(cookie.name, cookie.value, cookie.domain);
   }
 
   await scrapeUrlRecuversively(url);

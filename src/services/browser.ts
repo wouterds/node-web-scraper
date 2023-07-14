@@ -6,6 +6,7 @@ class Browser {
   private static _instance: Browser;
   private _browser: PuppeteerBrowser | null = null;
   private _page: Page | null = null;
+  private _cookies: { name: string; value: string; domain: string }[] = [];
 
   protected constructor() {
     puppeteer.launch({ headless: 'new' }).then(browser => {
@@ -35,17 +36,18 @@ class Browser {
     }
 
     this.instance._page = await this.instance._browser.newPage();
+
+    for (const cookie of this.instance._cookies) {
+      await this.instance._page.setCookie(cookie);
+    }
+
     await this.instance._page.goto(url);
 
     return true;
   }
 
   public static async setCookie(name: string, value: string, domain: string) {
-    if (!this.instance._page) {
-      throw new Error('Page is not ready');
-    }
-
-    await this.instance._page.setCookie({ name, value, domain });
+    this._instance._cookies.push({ name, value, domain });
   }
 
   public static async getHTML() {
