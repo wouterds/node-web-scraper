@@ -9,26 +9,52 @@ import Browser from '../services/browser';
 
 type Args = {
   domain?: string;
+  url?: string;
 };
 
-const { domain } = yargs(hideBin(process.argv)).argv as Args;
-if (!domain) {
-  console.log(colors.red('Please provide a domain with the --domain flag'));
+const { domain: domainArg, url: urlArg } = yargs(hideBin(process.argv))
+  .argv as Args;
+
+if (!domainArg && !urlArg) {
+  console.log(
+    colors.red(
+      'Please provide at least a domain or a url using the --domain or --url flags',
+    ),
+  );
   process.exit(1);
 }
-if (domain.includes('://')) {
+
+if (urlArg && domainArg) {
+  console.log(colors.red('Please provide either a domain or a url, not both'));
+  process.exit(1);
+}
+
+if (domainArg && domainArg.includes('://')) {
   console.log(
     colors.red('Please provide a valid domain (without the protocol)'),
   );
   process.exit(1);
 }
 
-console.log(colors.yellow(`${colors.bold('domain:')} ${domain}`));
+if (urlArg && !urlArg.includes('://')) {
+  console.log(colors.red('Please provide a valid url (with the protocol)'));
+  process.exit(1);
+}
 
-const url = `http://${domain}`;
+const domain = domainArg || new URL(urlArg as string).hostname;
+
+console.log(colors.white(`${colors.bold('Domain:')} ${domain}`));
+
+const url = urlArg || `http://${domain}`;
+
+const recursively = !urlArg;
 
 if (fs.existsSync(`./data/${domain}.csv`)) {
-  fs.unlinkSync(`./data/${domain}.csv`);
+  console.log(
+    colors.yellow(
+      `${colors.bold('Warning:')} existing csv file found, it will be extended`,
+    ),
+  );
 }
 
 const csvWriter = createObjectCsvWriter({
@@ -39,6 +65,7 @@ const csvWriter = createObjectCsvWriter({
     { id: 'title', title: 'title' },
     { id: 'content', title: 'content' },
   ],
+  append: true,
 });
 
 const links: string[] = [];
@@ -58,6 +85,10 @@ const scrapeUrlRecuversively = async (url: string) => {
   await csvWriter.writeRecords([{ url, title, content }]);
 
   console.log(`Scraped ${colors.magenta(url)} (${colors.blue(`${size}kb`)})`);
+
+  if (!recursively) {
+    return;
+  }
 
   for (const link of await Browser.getLinks()) {
     if (links.includes(link)) {
@@ -79,9 +110,7 @@ const scrapeUrlRecuversively = async (url: string) => {
 
   console.log(
     colors.green(
-      `Scraped ${colors.bold(
-        links.length.toString(),
-      )} pages in ${formatDistanceToNowStrict(
+      `Scraped ${links.length.toString()} pages in ${formatDistanceToNowStrict(
         start,
       )}, data stored in ${colors.underline(
         `./data/${domain}.csv`,
