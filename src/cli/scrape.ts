@@ -78,6 +78,16 @@ const csvWriter = createObjectCsvWriter({
   append: true,
 });
 
+const slugify = (input: string) => {
+  let slug = input.toLowerCase();
+
+  slug = slug.replace(/[\s\W-]+/g, '-');
+
+  slug = slug.replace(/^-+|-+$/g, '');
+
+  return slug;
+};
+
 const links: string[] = [];
 const scrapeUrlRecuversively = async (url: string) => {
   if (links.includes(url)) {
@@ -93,6 +103,16 @@ const scrapeUrlRecuversively = async (url: string) => {
   const size = Math.max(Math.ceil(content.length / 1024), 1);
 
   await csvWriter.writeRecords([{ url, title, content }]);
+
+  const html = await Browser.getHTML();
+  if (!fs.existsSync(`./data/${domain}`)) {
+    fs.mkdirSync(`./data/${domain}`);
+  }
+
+  fs.writeFileSync(
+    `./data/${domain}/${slugify(new URL(url).pathname) || 'index'}.html`,
+    html,
+  );
 
   console.log(`Scraped ${colors.magenta(url)} (${colors.blue(`${size}kb`)})`);
 
